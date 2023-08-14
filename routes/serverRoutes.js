@@ -772,8 +772,35 @@ router.post("/UpdateCase", async (req, res) => {
   );
 
   const decryptedUserDetails = {
-    UserInfo: decryptedUserInfoData,
     CaseApp,
+    UserInfo: decryptedUserInfoData,
+  };
+
+  try {
+    const apiUrl = `${process.env.REACT_APP_API_CRM_BASE_URL}/UpdateCase`;
+    const response = await axios.post(apiUrl, decryptedUserDetails);
+    res.status(200).json(response.data);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ error: "An error occurred while fetching data from the API." });
+  }
+});
+
+router.post("/updateCaseCancellable", async (req, res) => {
+  const CaseApp = req.body.CaseApp;
+  const UserInfoNewcDcrypt = req.body.UserInfoNew;
+
+  // Decrypt the data
+
+  const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
+  const decryptedUserInfoData = JSON.parse(
+    userInfobytes.toString(CryptoJS.enc.Utf8)
+  );
+
+  const decryptedUserDetails = {
+    CaseApp,
+    UserInfo: decryptedUserInfoData,
   };
 
   try {
