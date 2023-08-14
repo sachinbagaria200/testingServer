@@ -731,4 +731,60 @@ router.post("/InvokeADPCall", async (req, res) => {
   }
 });
 
+router.post("/CreateCaseJSON", async (req, res) => {
+  const CaseType = req.body.CaseType;
+  const CaseParams = req.body.CaseParams;
+  const UserInfoNewcDcrypt = req.body.UserInfoNew;
+
+  // Decrypt the data
+
+  const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
+  const decryptedUserInfoData = JSON.parse(
+    userInfobytes.toString(CryptoJS.enc.Utf8)
+  );
+
+  const decryptedUserDetails = {
+    UserInfo: decryptedUserInfoData,
+    CaseType,
+    CaseParams,
+  };
+
+  try {
+    const apiUrl = `${process.env.REACT_APP_API_CRM_BASE_URL}/CreateCaseJSON`;
+    const response = await axios.post(apiUrl, decryptedUserDetails);
+    res.status(200).json(response.data);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ error: "An error occurred while fetching data from the API." });
+  }
+});
+
+router.post("/UpdateCase", async (req, res) => {
+  const CaseApp = req.body.CaseApp;
+  const UserInfoNewcDcrypt = req.body.UserInfoNew;
+
+  // Decrypt the data
+
+  const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
+  const decryptedUserInfoData = JSON.parse(
+    userInfobytes.toString(CryptoJS.enc.Utf8)
+  );
+
+  const decryptedUserDetails = {
+    UserInfo: decryptedUserInfoData,
+    CaseApp,
+  };
+
+  try {
+    const apiUrl = `${process.env.REACT_APP_API_CRM_BASE_URL}/UpdateCase`;
+    const response = await axios.post(apiUrl, decryptedUserDetails);
+    res.status(200).json(response.data);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ error: "An error occurred while fetching data from the API." });
+  }
+});
+
 module.exports = router;
