@@ -401,34 +401,34 @@ router.post("/OrdoVRPCancelMandate", async (req, res) => {
   }
 });
 
-// router.post("/CaseRecalculatePaymentPlan", async (req, res) => {
-//   const pRequest = req.body.pRequest;
-//   const UserInfoNewcDcrypt = req.body.UserInfoNew;
+router.post("/CaseRecalculatePaymentPlan", async (req, res) => {
+  const pRequest = req.body.pRequest;
+  const UserInfoNewcDcrypt = req.body.UserInfoNew;
 
-//   // Decrypt the data
+  // Decrypt the data
 
-//   const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
-//   const decryptedUserInfoData = JSON.parse(
-//     userInfobytes.toString(CryptoJS.enc.Utf8)
-//   );
+  const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
+  const decryptedUserInfoData = JSON.parse(
+    userInfobytes.toString(CryptoJS.enc.Utf8)
+  );
 
-//   const decryptedUserDetails = {
-//     pRequest,
-//     UserInfo: decryptedUserInfoData,
-//   };
+  const decryptedUserDetails = {
+    UserInfo: decryptedUserInfoData,
+    pRequest,
+  };
 
-//   console.log("decryptedUserDetails", decryptedUserDetails);
+  console.log("decryptedUserDetails", decryptedUserDetails);
 
-//   try {
-//     const apiUrl = `${process.env.REACT_APP_API_CRM_BASE_URL}/CaseRecalculatePaymentPlan`;
-//     const response = await axios.post(apiUrl, decryptedUserDetails);
-//     res.status(200).json(response.data);
-//   } catch (error) {
-//     res
-//       .status(500)
-//       .json({ error: "An error occurred while fetching data from the API." });
-//   }
-// });
+  try {
+    const apiUrl = `${process.env.REACT_APP_API_CRM_BASE_URL}/CaseRecalculatePaymentPlan`;
+    const response = await axios.post(apiUrl, decryptedUserDetails);
+    res.status(200).json(response.data);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ error: "An error occurred while fetching data from the API." });
+  }
+});
 
 router.post("/UpdatePaymentPlanHolidays", async (req, res) => {
   const pRequest = req.body.pRequest;
