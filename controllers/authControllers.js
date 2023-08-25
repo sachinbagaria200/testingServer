@@ -48,8 +48,13 @@ exports.createUser = async (req, res, next) => {
 };
 
 exports.signUp = async (req, res, next) => {
-  const { firstName, surName, mobileNo, password } = req.body;
+  const { firstName, surName, mobileNo, password, customerReference } =
+    req.body;
   const email = req.body?.email.toLowerCase();
+
+  const finalCustomerReference =
+    customerReference !== undefined ? customerReference : null;
+
   try {
     const isEmailExists = await User.findOne({
       email,
@@ -57,7 +62,7 @@ exports.signUp = async (req, res, next) => {
     if (isEmailExists) {
       return next(
         new HttpError(
-          "Email already exists, please try to create user with another email.",
+          "Email already exists, please try to create a user with another email.",
           403
         )
       );
@@ -72,7 +77,7 @@ exports.signUp = async (req, res, next) => {
           surName,
           mobileNo,
           password: hashPassword,
-          customerReference: null,
+          customerReference: finalCustomerReference,
         });
 
         if (createdUser) {
@@ -82,7 +87,7 @@ exports.signUp = async (req, res, next) => {
               firstName,
               surName,
               mobileNo,
-              customerReference: null,
+              customerReference: finalCustomerReference,
             },
             process.env.JWT_ACCESSTOKEN_SECRET_KEY,
             {
@@ -111,7 +116,7 @@ exports.signUp = async (req, res, next) => {
                 firstName,
                 surName,
                 mobileNo,
-                customerReference: null,
+                customerReference: finalCustomerReference,
               },
               accessToken,
               refreshToken,
