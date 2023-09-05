@@ -6,10 +6,12 @@ const schema = new Schema({
   surName: { type: String },
   mobileNo: { type: Number, minlength: 10, maxlength: 10 },
   password: { type: String, minlength: 8 },
-  customerReference: { type: String, unique: true, sparse: true },
+  customerReference: { type: String, sparse: true },
   created_at: { type: Date, default: new Date() },
 });
 
-const User = mongoose.model("User", schema);
+// Old database "User" with customerReference null issue
+// const User = mongoose.model("User", schema);
+const User = mongoose.model("UserData", schema);
 
 module.exports = User;
