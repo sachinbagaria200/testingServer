@@ -4,11 +4,16 @@ const axios = require("axios");
 const CryptoJS = require("crypto-js");
 
 // Encryption key (keep this secret and secure)
-const encryptionKey = "dshruxanqkxaldeicnsana";
+const encryptionKey = process.env.REACT_APP_API_ENCRYPTION_KEY;
+
+const staticUserInfo = {
+  Username: process.env.REACT_APP_API_STATIC_USERNAME,
+  Password: process.env.REACT_APP_API_STATIC_PASSWORD,
+};
 
 router.post("/SearchCustomers", async (req, res) => {
   const CustomerReferencDcrypt = req.body.SearchParam;
-  const UserInfoNewcDcrypt = req.body.UserInfoNew;
+  // const UserInfoNewcDcrypt = req.body.UserInfoNew;
 
   // Decrypt the data
   const deCrptCustomerReferencString = CryptoJS.AES.decrypt(
@@ -21,14 +26,14 @@ router.post("/SearchCustomers", async (req, res) => {
     ""
   );
 
-  const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
-  const decryptedUserInfoData = JSON.parse(
-    userInfobytes.toString(CryptoJS.enc.Utf8)
-  );
+  // const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
+  // const decryptedUserInfoData = JSON.parse(
+  //   userInfobytes.toString(CryptoJS.enc.Utf8)
+  // );
 
   const decryptedUserDetails = {
     SearchParam: deCrptCustomerReferenc,
-    UserInfo: decryptedUserInfoData,
+    UserInfo: staticUserInfo,
   };
 
   try {
@@ -44,7 +49,7 @@ router.post("/SearchCustomers", async (req, res) => {
 
 router.post("/GetCase", async (req, res) => {
   const CaseReferenceDcrypt = req.body.CaseReference;
-  const UserInfoNewcDcrypt = req.body.UserInfoNew;
+  // const UserInfoNewcDcrypt = req.body.UserInfoNew;
 
   // Decrypt the data
   const deCrptCaseReferenceString = CryptoJS.AES.decrypt(
@@ -57,14 +62,14 @@ router.post("/GetCase", async (req, res) => {
     ""
   );
 
-  const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
-  const decryptedUserInfoData = JSON.parse(
-    userInfobytes.toString(CryptoJS.enc.Utf8)
-  );
+  // const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
+  // const decryptedUserInfoData = JSON.parse(
+  //   userInfobytes.toString(CryptoJS.enc.Utf8)
+  // );
 
   const decryptedUserDetails = {
     CaseReference: deCrptCaseReference,
-    UserInfo: decryptedUserInfoData,
+    UserInfo: staticUserInfo,
   };
 
   try {
@@ -80,7 +85,7 @@ router.post("/GetCase", async (req, res) => {
 
 router.post("/GetADPData", async (req, res) => {
   const CaseReferenceDcrypt = req.body.CaseReference;
-  const UserInfoNewcDcrypt = req.body.UserInfoNew;
+  // const UserInfoNewcDcrypt = req.body.UserInfoNew;
 
   // Decrypt the data
   const deCrptCaseReferenceString = CryptoJS.AES.decrypt(
@@ -93,14 +98,14 @@ router.post("/GetADPData", async (req, res) => {
     ""
   );
 
-  const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
-  const decryptedUserInfoData = JSON.parse(
-    userInfobytes.toString(CryptoJS.enc.Utf8)
-  );
+  // const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
+  // const decryptedUserInfoData = JSON.parse(
+  //   userInfobytes.toString(CryptoJS.enc.Utf8)
+  // );
 
   const decryptedUserDetails = {
     CaseReference: deCrptCaseReference,
-    UserInfo: decryptedUserInfoData,
+    UserInfo: staticUserInfo,
   };
 
   try {
@@ -116,23 +121,24 @@ router.post("/GetADPData", async (req, res) => {
 
 router.post("/GetOpenBankingStatus", async (req, res) => {
   const pRequest = req.body.pRequest;
-  const UserInfoNewcDcrypt = req.body.UserInfoNew;
+  // const UserInfoNewcDcrypt = req.body.UserInfoNew;
 
   // Decrypt the data
 
-  const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
-  const decryptedUserInfoData = JSON.parse(
-    userInfobytes.toString(CryptoJS.enc.Utf8)
-  );
+  // const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
+  // const decryptedUserInfoData = JSON.parse(
+  //   userInfobytes.toString(CryptoJS.enc.Utf8)
+  // );
 
   const decryptedUserDetails = {
     pRequest,
-    UserInfo: decryptedUserInfoData,
+    UserInfo: staticUserInfo,
   };
 
   try {
     const apiUrl = `${process.env.REACT_APP_API_CRM_BASE_URL}/GetOpenBankingStatus`;
     const response = await axios.post(apiUrl, decryptedUserDetails);
+
     res.status(200).json(response.data);
   } catch (error) {
     res
@@ -142,24 +148,22 @@ router.post("/GetOpenBankingStatus", async (req, res) => {
 });
 
 router.post("/GetFinancialTransactions", async (req, res) => {
-  const UserInfoNewcDcrypt = req.body.UserInfoNew;
+  // const UserInfoNewcDcrypt = req.body.UserInfoNew;
   const remainingFinancialTransactionsData = { ...req.body };
 
   // Decrypt the data
 
-  const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
-  const decryptedUserInfoData = JSON.parse(
-    userInfobytes.toString(CryptoJS.enc.Utf8)
-  );
+  // const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
+  // const decryptedUserInfoData = JSON.parse(
+  //   userInfobytes.toString(CryptoJS.enc.Utf8)
+  // );
 
   delete remainingFinancialTransactionsData.UserInfoNew;
 
   const decryptedUserDetails = {
     ...remainingFinancialTransactionsData,
-    UserInfo: decryptedUserInfoData,
+    UserInfo: staticUserInfo,
   };
-
-  console.log("decryptedUserDetails", decryptedUserDetails);
 
   try {
     const apiUrl = `${process.env.REACT_APP_API_CRM_BASE_URL}/GetFinancialTransactions`;
@@ -174,18 +178,18 @@ router.post("/GetFinancialTransactions", async (req, res) => {
 
 router.post("/OrdoVRPCreateMandate", async (req, res) => {
   const MandateData = req.body.MandateData;
-  const UserInfoNewcDcrypt = req.body.UserInfoNew;
+  // const UserInfoNewcDcrypt = req.body.UserInfoNew;
 
   // Decrypt the data
 
-  const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
-  const decryptedUserInfoData = JSON.parse(
-    userInfobytes.toString(CryptoJS.enc.Utf8)
-  );
+  // const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
+  // const decryptedUserInfoData = JSON.parse(
+  //   userInfobytes.toString(CryptoJS.enc.Utf8)
+  // );
 
   const decryptedUserDetails = {
     MandateData,
-    UserInfo: decryptedUserInfoData,
+    UserInfo: staticUserInfo,
   };
 
   try {
@@ -203,21 +207,21 @@ router.post(
   "/accessPaysuiteIsStartDateValidatForContract",
   async (req, res) => {
     const StartDate = req.body.StartDate;
-    const UserInfoNewcDcrypt = req.body.UserInfoNew;
+    // const UserInfoNewcDcrypt = req.body.UserInfoNew;
 
     // Decrypt the data
 
-    const userInfobytes = CryptoJS.AES.decrypt(
-      UserInfoNewcDcrypt,
-      encryptionKey
-    );
-    const decryptedUserInfoData = JSON.parse(
-      userInfobytes.toString(CryptoJS.enc.Utf8)
-    );
+    // const userInfobytes = CryptoJS.AES.decrypt(
+    //   UserInfoNewcDcrypt,
+    //   encryptionKey
+    // );
+    // const decryptedUserInfoData = JSON.parse(
+    //   userInfobytes.toString(CryptoJS.enc.Utf8)
+    // );
 
     const decryptedUserDetails = {
       StartDate,
-      UserInfo: decryptedUserInfoData,
+      UserInfo: staticUserInfo,
     };
 
     try {
@@ -234,18 +238,18 @@ router.post(
 
 router.post("/IsAccessPaysuiteCustomerCreated", async (req, res) => {
   const ApplicantID = req.body.ApplicantID;
-  const UserInfoNewcDcrypt = req.body.UserInfoNew;
+  // const UserInfoNewcDcrypt = req.body.UserInfoNew;
 
   // Decrypt the data
 
-  const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
-  const decryptedUserInfoData = JSON.parse(
-    userInfobytes.toString(CryptoJS.enc.Utf8)
-  );
+  // const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
+  // const decryptedUserInfoData = JSON.parse(
+  //   userInfobytes.toString(CryptoJS.enc.Utf8)
+  // );
 
   const decryptedUserDetails = {
     ApplicantID,
-    UserInfo: decryptedUserInfoData,
+    UserInfo: staticUserInfo,
   };
 
   try {
@@ -261,20 +265,20 @@ router.post("/IsAccessPaysuiteCustomerCreated", async (req, res) => {
 
 router.post("/AccessPaysuiteCreateCustomer", async (req, res) => {
   const ApplicantID = req.body.ApplicantID;
-  const UserInfoNewcDcrypt = req.body.UserInfoNew;
+  // const UserInfoNewcDcrypt = req.body.UserInfoNew;
   const Customer = req.body.Customer;
 
   // Decrypt the data
 
-  const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
-  const decryptedUserInfoData = JSON.parse(
-    userInfobytes.toString(CryptoJS.enc.Utf8)
-  );
+  // const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
+  // const decryptedUserInfoData = JSON.parse(
+  //   userInfobytes.toString(CryptoJS.enc.Utf8)
+  // );
 
   const decryptedUserDetails = {
     ApplicantID,
     Customer,
-    UserInfo: decryptedUserInfoData,
+    UserInfo: staticUserInfo,
   };
 
   try {
@@ -289,19 +293,19 @@ router.post("/AccessPaysuiteCreateCustomer", async (req, res) => {
 });
 router.post("/IsAccessPaysuiteContractCreated", async (req, res) => {
   const ApplicantID = req.body.ApplicantID;
-  const UserInfoNewcDcrypt = req.body.UserInfoNew;
+  // const UserInfoNewcDcrypt = req.body.UserInfoNew;
 
   // Decrypt the data
 
-  const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
-  const decryptedUserInfoData = JSON.parse(
-    userInfobytes.toString(CryptoJS.enc.Utf8)
-  );
+  // const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
+  // const decryptedUserInfoData = JSON.parse(
+  //   userInfobytes.toString(CryptoJS.enc.Utf8)
+  // );
 
   const decryptedUserDetails = {
     ApplicantID,
 
-    UserInfo: decryptedUserInfoData,
+    UserInfo: staticUserInfo,
   };
 
   try {
@@ -317,19 +321,19 @@ router.post("/IsAccessPaysuiteContractCreated", async (req, res) => {
 
 router.post("/AccessPaysuiteCreateContract", async (req, res) => {
   const ApplicantID = req.body.ApplicantID;
-  const UserInfoNewcDcrypt = req.body.UserInfoNew;
+  // const UserInfoNewcDcrypt = req.body.UserInfoNew;
   const ScheduleId = req.body.ScheduleId;
   // Decrypt the data
 
-  const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
-  const decryptedUserInfoData = JSON.parse(
-    userInfobytes.toString(CryptoJS.enc.Utf8)
-  );
+  // const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
+  // const decryptedUserInfoData = JSON.parse(
+  //   userInfobytes.toString(CryptoJS.enc.Utf8)
+  // );
 
   const decryptedUserDetails = {
     ApplicantID,
     ScheduleId,
-    UserInfo: decryptedUserInfoData,
+    UserInfo: staticUserInfo,
   };
 
   try {
@@ -345,18 +349,18 @@ router.post("/AccessPaysuiteCreateContract", async (req, res) => {
 
 router.post("/AccessPaysuiteCancelContract", async (req, res) => {
   const ApplicantID = req.body.ApplicantID;
-  const UserInfoNewcDcrypt = req.body.UserInfoNew;
+  // const UserInfoNewcDcrypt = req.body.UserInfoNew;
 
   // Decrypt the data
 
-  const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
-  const decryptedUserInfoData = JSON.parse(
-    userInfobytes.toString(CryptoJS.enc.Utf8)
-  );
+  // const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
+  // const decryptedUserInfoData = JSON.parse(
+  //   userInfobytes.toString(CryptoJS.enc.Utf8)
+  // );
 
   const decryptedUserDetails = {
     ApplicantID,
-    UserInfo: decryptedUserInfoData,
+    UserInfo: staticUserInfo,
   };
 
   console.log("decryptedUserDetails", decryptedUserDetails);
@@ -374,18 +378,18 @@ router.post("/AccessPaysuiteCancelContract", async (req, res) => {
 
 router.post("/OrdoVRPCancelMandate", async (req, res) => {
   const CaseReference = req.body.CaseReference;
-  const UserInfoNewcDcrypt = req.body.UserInfoNew;
+  // const UserInfoNewcDcrypt = req.body.UserInfoNew;
 
   // Decrypt the data
 
-  const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
-  const decryptedUserInfoData = JSON.parse(
-    userInfobytes.toString(CryptoJS.enc.Utf8)
-  );
+  // const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
+  // const decryptedUserInfoData = JSON.parse(
+  //   userInfobytes.toString(CryptoJS.enc.Utf8)
+  // );
 
   const decryptedUserDetails = {
     CaseReference,
-    UserInfo: decryptedUserInfoData,
+    UserInfo: staticUserInfo,
   };
 
   console.log("decryptedUserDetails", decryptedUserDetails);
@@ -403,17 +407,17 @@ router.post("/OrdoVRPCancelMandate", async (req, res) => {
 
 router.post("/CaseRecalculatePaymentPlan", async (req, res) => {
   const pRequest = req.body.pRequest;
-  const UserInfoNewcDcrypt = req.body.UserInfoNew;
+  // const UserInfoNewcDcrypt = req.body.UserInfoNew;
 
   // Decrypt the data
 
-  const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
-  const decryptedUserInfoData = JSON.parse(
-    userInfobytes.toString(CryptoJS.enc.Utf8)
-  );
+  // const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
+  // const decryptedUserInfoData = JSON.parse(
+  //   userInfobytes.toString(CryptoJS.enc.Utf8)
+  // );
 
   const decryptedUserDetails = {
-    UserInfo: decryptedUserInfoData,
+    UserInfo: staticUserInfo,
     pRequest,
   };
 
@@ -432,18 +436,18 @@ router.post("/CaseRecalculatePaymentPlan", async (req, res) => {
 
 router.post("/UpdatePaymentPlanHolidays", async (req, res) => {
   const pRequest = req.body.pRequest;
-  const UserInfoNewcDcrypt = req.body.UserInfoNew;
+  // const UserInfoNewcDcrypt = req.body.UserInfoNew;
 
   // Decrypt the data
 
-  const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
-  const decryptedUserInfoData = JSON.parse(
-    userInfobytes.toString(CryptoJS.enc.Utf8)
-  );
+  // const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
+  // const decryptedUserInfoData = JSON.parse(
+  //   userInfobytes.toString(CryptoJS.enc.Utf8)
+  // );
 
   const decryptedUserDetails = {
     pRequest,
-    UserInfo: decryptedUserInfoData,
+    UserInfo: staticUserInfo,
   };
 
   console.log("decryptedUserDetails", decryptedUserDetails);
@@ -461,18 +465,18 @@ router.post("/UpdatePaymentPlanHolidays", async (req, res) => {
 
 router.post("/OpenBankingHandShakeInvoke", async (req, res) => {
   const pRequest = req.body.pRequest;
-  const UserInfoNewcDcrypt = req.body.UserInfoNew;
+  // const UserInfoNewcDcrypt = req.body.UserInfoNew;
 
   // Decrypt the data
 
-  const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
-  const decryptedUserInfoData = JSON.parse(
-    userInfobytes.toString(CryptoJS.enc.Utf8)
-  );
+  // const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
+  // const decryptedUserInfoData = JSON.parse(
+  //   userInfobytes.toString(CryptoJS.enc.Utf8)
+  // );
 
   const decryptedUserDetails = {
     pRequest,
-    UserInfo: decryptedUserInfoData,
+    UserInfo: staticUserInfo,
   };
 
   console.log("decryptedUserDetails", decryptedUserDetails);
@@ -490,18 +494,18 @@ router.post("/OpenBankingHandShakeInvoke", async (req, res) => {
 
 router.post("/getPostcodeLookup", async (req, res) => {
   const pRequest = req.body.pRequest;
-  const UserInfoNewcDcrypt = req.body.UserInfoNew;
+  // const UserInfoNewcDcrypt = req.body.UserInfoNew;
 
   // Decrypt the data
 
-  const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
-  const decryptedUserInfoData = JSON.parse(
-    userInfobytes.toString(CryptoJS.enc.Utf8)
-  );
+  // const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
+  // const decryptedUserInfoData = JSON.parse(
+  //   userInfobytes.toString(CryptoJS.enc.Utf8)
+  // );
 
   const decryptedUserDetails = {
     pRequest,
-    UserInfo: decryptedUserInfoData,
+    UserInfo: staticUserInfo,
   };
 
   try {
@@ -517,17 +521,17 @@ router.post("/getPostcodeLookup", async (req, res) => {
 
 router.post("/GetInvoiceTerms", async (req, res) => {
   const IncludeRefund = req.body.IncludeRefunds;
-  const UserInfoNewcDcrypt = req.body.UserInfoNew;
+  // const UserInfoNewcDcrypt = req.body.UserInfoNew;
   const Reference = req.body.Reference;
   // Decrypt the data
 
-  const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
-  const decryptedUserInfoData = JSON.parse(
-    userInfobytes.toString(CryptoJS.enc.Utf8)
-  );
+  // const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
+  // const decryptedUserInfoData = JSON.parse(
+  //   userInfobytes.toString(CryptoJS.enc.Utf8)
+  // );
 
   const decryptedUserDetails = {
-    UserInfo: decryptedUserInfoData,
+    UserInfo: staticUserInfo,
     IncludeRefunds: IncludeRefund,
     Reference,
   };
@@ -544,17 +548,17 @@ router.post("/GetInvoiceTerms", async (req, res) => {
 });
 router.post("/OrdoCollectPayment", async (req, res) => {
   const PaymentInfo = req.body.PaymentInfo;
-  const UserInfoNewcDcrypt = req.body.UserInfoNew;
+  // const UserInfoNewcDcrypt = req.body.UserInfoNew;
 
   // Decrypt the data
 
-  const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
-  const decryptedUserInfoData = JSON.parse(
-    userInfobytes.toString(CryptoJS.enc.Utf8)
-  );
+  // const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
+  // const decryptedUserInfoData = JSON.parse(
+  //   userInfobytes.toString(CryptoJS.enc.Utf8)
+  // );
 
   const decryptedUserDetails = {
-    UserInfo: decryptedUserInfoData,
+    UserInfo: staticUserInfo,
     PaymentInfo,
   };
 
@@ -571,17 +575,17 @@ router.post("/OrdoCollectPayment", async (req, res) => {
 
 router.post("/UpdateCustomer", async (req, res) => {
   const Customer = req.body.Customer;
-  const UserInfoNewcDcrypt = req.body.UserInfoNew;
+  // const UserInfoNewcDcrypt = req.body.UserInfoNew;
 
   // Decrypt the data
 
-  const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
-  const decryptedUserInfoData = JSON.parse(
-    userInfobytes.toString(CryptoJS.enc.Utf8)
-  );
+  // const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
+  // const decryptedUserInfoData = JSON.parse(
+  //   userInfobytes.toString(CryptoJS.enc.Utf8)
+  // );
 
   const decryptedUserDetails = {
-    UserInfo: decryptedUserInfoData,
+    UserInfo: staticUserInfo,
     Customer,
   };
 
@@ -598,17 +602,17 @@ router.post("/UpdateCustomer", async (req, res) => {
 
 router.post("/UpdateCaseLockPaymentPlan", async (req, res) => {
   const ApplicantID = req.body.CaseReference;
-  const UserInfoNewcDcrypt = req.body.UserInfoNew;
+  // const UserInfoNewcDcrypt = req.body.UserInfoNew;
 
   // Decrypt the data
 
-  const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
-  const decryptedUserInfoData = JSON.parse(
-    userInfobytes.toString(CryptoJS.enc.Utf8)
-  );
+  // const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
+  // const decryptedUserInfoData = JSON.parse(
+  //   userInfobytes.toString(CryptoJS.enc.Utf8)
+  // );
 
   const decryptedUserDetails = {
-    UserInfo: decryptedUserInfoData,
+    UserInfo: staticUserInfo,
     CaseReference: ApplicantID,
   };
 
@@ -625,17 +629,17 @@ router.post("/UpdateCaseLockPaymentPlan", async (req, res) => {
 
 router.post("/CreateDocumentToPdf", async (req, res) => {
   const pRequest = req.body.pRequest;
-  const UserInfoNewcDcrypt = req.body.UserInfoNew;
+  // const UserInfoNewcDcrypt = req.body.UserInfoNew;
 
   // Decrypt the data
 
-  const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
-  const decryptedUserInfoData = JSON.parse(
-    userInfobytes.toString(CryptoJS.enc.Utf8)
-  );
+  // const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
+  // const decryptedUserInfoData = JSON.parse(
+  //   userInfobytes.toString(CryptoJS.enc.Utf8)
+  // );
 
   const decryptedUserDetails = {
-    UserInfo: decryptedUserInfoData,
+    UserInfo: staticUserInfo,
     pRequest,
   };
 
@@ -652,17 +656,17 @@ router.post("/CreateDocumentToPdf", async (req, res) => {
 
 router.post("/FetchifyMobileVerification", async (req, res) => {
   const pRequest = req.body.pRequest;
-  const UserInfoNewcDcrypt = req.body.UserInfoNew;
+  // const UserInfoNewcDcrypt = req.body.UserInfoNew;
 
   // Decrypt the data
 
-  const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
-  const decryptedUserInfoData = JSON.parse(
-    userInfobytes.toString(CryptoJS.enc.Utf8)
-  );
+  // const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
+  // const decryptedUserInfoData = JSON.parse(
+  //   userInfobytes.toString(CryptoJS.enc.Utf8)
+  // );
 
   const decryptedUserDetails = {
-    UserInfo: decryptedUserInfoData,
+    UserInfo: staticUserInfo,
     pRequest,
   };
 
@@ -679,17 +683,17 @@ router.post("/FetchifyMobileVerification", async (req, res) => {
 
 router.post("/FetchifyEmailVerification", async (req, res) => {
   const pRequest = req.body.pRequest;
-  const UserInfoNewcDcrypt = req.body.UserInfoNew;
+  // const UserInfoNewcDcrypt = req.body.UserInfoNew;
 
   // Decrypt the data
 
-  const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
-  const decryptedUserInfoData = JSON.parse(
-    userInfobytes.toString(CryptoJS.enc.Utf8)
-  );
+  // const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
+  // const decryptedUserInfoData = JSON.parse(
+  //   userInfobytes.toString(CryptoJS.enc.Utf8)
+  // );
 
   const decryptedUserDetails = {
-    UserInfo: decryptedUserInfoData,
+    UserInfo: staticUserInfo,
     pRequest,
   };
 
@@ -706,17 +710,17 @@ router.post("/FetchifyEmailVerification", async (req, res) => {
 
 router.post("/InvokeADPCall", async (req, res) => {
   const pRequest = req.body.pRequest;
-  const UserInfoNewcDcrypt = req.body.UserInfoNew;
+  // const UserInfoNewcDcrypt = req.body.UserInfoNew;
 
   // Decrypt the data
 
-  const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
-  const decryptedUserInfoData = JSON.parse(
-    userInfobytes.toString(CryptoJS.enc.Utf8)
-  );
+  // const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
+  // const decryptedUserInfoData = JSON.parse(
+  //   userInfobytes.toString(CryptoJS.enc.Utf8)
+  // );
 
   const decryptedUserDetails = {
-    UserInfo: decryptedUserInfoData,
+    UserInfo: staticUserInfo,
     pRequest,
   };
 
@@ -734,17 +738,17 @@ router.post("/InvokeADPCall", async (req, res) => {
 router.post("/CreateCaseJSON", async (req, res) => {
   const CaseType = req.body.CaseType;
   const CaseParams = req.body.CaseParams;
-  const UserInfoNewcDcrypt = req.body.UserInfoNew;
+  // const UserInfoNewcDcrypt = req.body.UserInfoNew;
 
   // Decrypt the data
 
-  const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
-  const decryptedUserInfoData = JSON.parse(
-    userInfobytes.toString(CryptoJS.enc.Utf8)
-  );
+  // const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
+  // const decryptedUserInfoData = JSON.parse(
+  //   userInfobytes.toString(CryptoJS.enc.Utf8)
+  // );
 
   const decryptedUserDetails = {
-    UserInfo: decryptedUserInfoData,
+    UserInfo: staticUserInfo,
     CaseType,
     CaseParams,
   };
@@ -762,18 +766,18 @@ router.post("/CreateCaseJSON", async (req, res) => {
 
 router.post("/UpdateCase", async (req, res) => {
   const CaseApp = req.body.CaseApp;
-  const UserInfoNewcDcrypt = req.body.UserInfoNew;
+  // const UserInfoNewcDcrypt = req.body.UserInfoNew;
 
   // Decrypt the data
 
-  const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
-  const decryptedUserInfoData = JSON.parse(
-    userInfobytes.toString(CryptoJS.enc.Utf8)
-  );
+  // const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
+  // const decryptedUserInfoData = JSON.parse(
+  //   userInfobytes.toString(CryptoJS.enc.Utf8)
+  // );
 
   const decryptedUserDetails = {
     CaseApp,
-    UserInfo: decryptedUserInfoData,
+    UserInfo: staticUserInfo,
   };
 
   try {
@@ -789,18 +793,18 @@ router.post("/UpdateCase", async (req, res) => {
 
 router.post("/updateCaseCancellable", async (req, res) => {
   const CaseApp = req.body.CaseApp;
-  const UserInfoNewcDcrypt = req.body.UserInfoNew;
+  // const UserInfoNewcDcrypt = req.body.UserInfoNew;
 
   // Decrypt the data
 
-  const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
-  const decryptedUserInfoData = JSON.parse(
-    userInfobytes.toString(CryptoJS.enc.Utf8)
-  );
+  // const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
+  // const decryptedUserInfoData = JSON.parse(
+  //   userInfobytes.toString(CryptoJS.enc.Utf8)
+  // );
 
   const decryptedUserDetails = {
     CaseApp,
-    UserInfo: decryptedUserInfoData,
+    UserInfo: staticUserInfo,
   };
 
   try {
