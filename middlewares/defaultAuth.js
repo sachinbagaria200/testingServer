@@ -32,3 +32,29 @@ exports.defaultAuth = async (req, res, next) => {
     );
   }
 };
+
+exports.verifyTokenForAllRoutes = async (req, res, next) => {
+  const token = req.body.accessToken;
+
+  if (!token) {
+    return next(new HttpError("No token, Authorization Denied", 400));
+  }
+  try {
+    const tokenData = jwt.verify(token, process.env.JWT_ACCESSTOKEN_SECRET_KEY);
+    if (tokenData) {
+      res.locals.tokenUserRef = tokenData?.customerReference
+        ? tokenData?.customerReference
+        : "";
+      next();
+    } else {
+      return next(new HttpError("Unauthorized request, please try again", 401));
+    }
+  } catch (error) {
+    if (error instanceof jwt.TokenExpiredError) {
+      return next(new HttpError("Token is expired.", 401));
+    }
+    return next(
+      new HttpError(error || "Something went wrong, please try again", 500)
+    );
+  }
+};

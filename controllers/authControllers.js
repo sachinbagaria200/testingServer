@@ -91,7 +91,7 @@ exports.signUp = async (req, res, next) => {
             },
             process.env.JWT_ACCESSTOKEN_SECRET_KEY,
             {
-              expiresIn: "1h",
+              expiresIn: "100d",
             }
           );
 
@@ -99,7 +99,7 @@ exports.signUp = async (req, res, next) => {
             { email },
             process.env.JWT_REFRESHTOKEN_SECRET_KEY,
             {
-              expiresIn: "7d",
+              expiresIn: "100d",
             }
           );
 

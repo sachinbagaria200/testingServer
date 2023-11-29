@@ -1,26 +1,28 @@
-const { json } = require("body-parser");
-const bodyParser = require("body-parser");
 const express = require("express");
-const mongoose = require("mongoose");
 const cors = require("cors");
+const app = express();
+
+const bodyParser = require("body-parser");
+
 require("dotenv").config();
 
 const HttpError = require("./models/http-error");
-
 const authRoutes = require("./routes/authRoutes");
 const serverRoutes = require("./routes/serverRoutes");
+const { verifyTokenForAllRoutes } = require("./middlewares/defaultAuth");
 
-const app = express();
 const PORT = process.env.PORT;
-
+const connectDB = require("./config/dbConnect.js");
+//Connect mongo db
+connectDB();
 app.use(cors());
-
+app.use(express.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
 app.get("/", (req, res, next) => res.json({ message: `Server is running...` }));
 
 app.use("/auth", authRoutes);
-app.use("/api", serverRoutes);
+app.use("/api", verifyTokenForAllRoutes, serverRoutes);
 
 app.use((req, res, next) => {
   const error = new HttpError("Could not find this route.", 404);
@@ -34,16 +36,6 @@ app.use((error, req, res, next) => {
   });
 });
 
-async function main() {
-  await mongoose.connect(process.env.DB_CONNECTION_STRING);
-}
-main()
-  .then(() => {
-    console.log("DB connected!");
-    try {
-      app.listen(PORT, () => console.log(`Server is running on PORT: ${PORT}`));
-    } catch (error) {
-      console.log(error.message);
-    }
-  })
-  .catch((err) => console.log(err));
+app.listen(PORT, () => {
+  console.log(`server is up and running on port: ${PORT}.`);
+});

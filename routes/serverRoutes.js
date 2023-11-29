@@ -1,8 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const axios = require("axios");
-const CryptoJS = require("crypto-js");
-
+const User = require("../schemas/userSchema");
+const validateCustomerCases = require("../utils/validateCustomerCases");
 // Encryption key (keep this secret and secure)
 const encryptionKey = process.env.REACT_APP_API_ENCRYPTION_KEY;
 
@@ -12,33 +12,33 @@ const staticUserInfo = {
 };
 
 router.post("/SearchCustomers", async (req, res) => {
-  const CustomerReferencDcrypt = req.body.SearchParam;
-  // const UserInfoNewcDcrypt = req.body.UserInfoNew;
+  const SearchParam = req.body.SearchParam;
+  const tokenRef = res.locals.tokenUserRef;
+  if (tokenRef != SearchParam) {
+    return res.status(401).json("Unauthorized request, please try again");
+  }
 
-  // Decrypt the data
-  const deCrptCustomerReferencString = CryptoJS.AES.decrypt(
-    CustomerReferencDcrypt,
-    encryptionKey
-  ).toString(CryptoJS.enc.Utf8);
-
-  let deCrptCustomerReferenc = deCrptCustomerReferencString.replace(
-    /^['"]|['"]$/g,
-    ""
-  );
-
-  // const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
-  // const decryptedUserInfoData = JSON.parse(
-  //   userInfobytes.toString(CryptoJS.enc.Utf8)
-  // );
-
-  const decryptedUserDetails = {
-    SearchParam: deCrptCustomerReferenc,
+  const payload = {
+    SearchParam: SearchParam,
     UserInfo: staticUserInfo,
   };
-
   try {
     const apiUrl = `${process.env.REACT_APP_API_CRM_BASE_URL}/SearchCustomers`;
-    const response = await axios.post(apiUrl, decryptedUserDetails);
+    const response = await axios.post(apiUrl, payload);
+
+    const customerCasesObj = response.data?.d?.Records[0]?.CustomerCases || [];
+    const customerCasesCode = customerCasesObj.map(
+      (transaction) => transaction.CaseRef
+    );
+    try {
+      await User.updateOne(
+        { customerReference: SearchParam },
+        { $set: { customerCases: customerCasesCode } }
+      );
+    } catch (e) {
+      console.log(e);
+    }
+
     res.status(200).json(response.data);
   } catch (error) {
     res
@@ -48,34 +48,28 @@ router.post("/SearchCustomers", async (req, res) => {
 });
 
 router.post("/GetCase", async (req, res) => {
-  const CaseReferenceDcrypt = req.body.CaseReference;
-  // const UserInfoNewcDcrypt = req.body.UserInfoNew;
+  const CaseReference = req.body.CaseReference;
+  const tokenRef = res.locals.tokenUserRef;
 
-  // Decrypt the data
-  const deCrptCaseReferenceString = CryptoJS.AES.decrypt(
-    CaseReferenceDcrypt,
-    encryptionKey
-  ).toString(CryptoJS.enc.Utf8);
-
-  let deCrptCaseReference = deCrptCaseReferenceString.replace(
-    /^['"]|['"]$/g,
-    ""
+  let isValidCustomerCasesCode = await validateCustomerCases(
+    tokenRef,
+    CaseReference
   );
-
-  // const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
-  // const decryptedUserInfoData = JSON.parse(
-  //   userInfobytes.toString(CryptoJS.enc.Utf8)
-  // );
-
-  const decryptedUserDetails = {
-    CaseReference: deCrptCaseReference,
+  if (!isValidCustomerCasesCode) {
+    return res.status(401).json("Unauthorized request, please try again");
+  }
+  const payload = {
+    CaseReference: CaseReference,
     UserInfo: staticUserInfo,
   };
-
   try {
     const apiUrl = `${process.env.REACT_APP_API_CRM_BASE_URL}/GetCase`;
-    const response = await axios.post(apiUrl, decryptedUserDetails);
-    res.status(200).json(response.data);
+    const response = await axios.post(apiUrl, payload);
+    if (tokenRef != response.data.d?.CaseApplicant?.CustomerReference) {
+      return res.status(401).json("Unauthorized request, please try again");
+    } else {
+      res.status(200).json(response.data);
+    }
   } catch (error) {
     res
       .status(500)
@@ -84,33 +78,24 @@ router.post("/GetCase", async (req, res) => {
 });
 
 router.post("/GetADPData", async (req, res) => {
-  const CaseReferenceDcrypt = req.body.CaseReference;
-  // const UserInfoNewcDcrypt = req.body.UserInfoNew;
-
-  // Decrypt the data
-  const deCrptCaseReferenceString = CryptoJS.AES.decrypt(
-    CaseReferenceDcrypt,
-    encryptionKey
-  ).toString(CryptoJS.enc.Utf8);
-
-  let deCrptCaseReference = deCrptCaseReferenceString.replace(
-    /^['"]|['"]$/g,
-    ""
+  const CaseReference = req.body.CaseReference;
+  const tokenRef = res.locals.tokenUserRef;
+  let isValidCustomerCasesCode = await validateCustomerCases(
+    tokenRef,
+    CaseReference
   );
+  if (!isValidCustomerCasesCode) {
+    return res.status(401).json("Unauthorized request, please try again");
+  }
 
-  // const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
-  // const decryptedUserInfoData = JSON.parse(
-  //   userInfobytes.toString(CryptoJS.enc.Utf8)
-  // );
-
-  const decryptedUserDetails = {
-    CaseReference: deCrptCaseReference,
+  const payload = {
+    CaseReference: CaseReference,
     UserInfo: staticUserInfo,
   };
 
   try {
     const apiUrl = `${process.env.REACT_APP_API_CRM_BASE_URL}/GetADPData`;
-    const response = await axios.post(apiUrl, decryptedUserDetails);
+    const response = await axios.post(apiUrl, payload);
     res.status(200).json(response.data);
   } catch (error) {
     res
@@ -121,23 +106,19 @@ router.post("/GetADPData", async (req, res) => {
 
 router.post("/GetOpenBankingStatus", async (req, res) => {
   const pRequest = req.body.pRequest;
-  // const UserInfoNewcDcrypt = req.body.UserInfoNew;
+  const tokenRef = res.locals.tokenUserRef;
 
-  // Decrypt the data
-
-  // const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
-  // const decryptedUserInfoData = JSON.parse(
-  //   userInfobytes.toString(CryptoJS.enc.Utf8)
-  // );
-
-  const decryptedUserDetails = {
+  if (tokenRef != pRequest.CustomerCode) {
+    return res.status(401).json("Unauthorized request, please try again");
+  }
+  const payload = {
     pRequest,
     UserInfo: staticUserInfo,
   };
 
   try {
     const apiUrl = `${process.env.REACT_APP_API_CRM_BASE_URL}/GetOpenBankingStatus`;
-    const response = await axios.post(apiUrl, decryptedUserDetails);
+    const response = await axios.post(apiUrl, payload);
 
     res.status(200).json(response.data);
   } catch (error) {
@@ -148,26 +129,27 @@ router.post("/GetOpenBankingStatus", async (req, res) => {
 });
 
 router.post("/GetFinancialTransactions", async (req, res) => {
-  // const UserInfoNewcDcrypt = req.body.UserInfoNew;
   const remainingFinancialTransactionsData = { ...req.body };
+  const tokenRef = res.locals.tokenUserRef;
 
-  // Decrypt the data
-
-  // const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
-  // const decryptedUserInfoData = JSON.parse(
-  //   userInfobytes.toString(CryptoJS.enc.Utf8)
-  // );
+  let isValidCustomerCasesCode = await validateCustomerCases(
+    tokenRef,
+    remainingFinancialTransactionsData.Reference
+  );
+  if (!isValidCustomerCasesCode) {
+    return res.status(401).json("Unauthorized request, please try again");
+  }
 
   delete remainingFinancialTransactionsData.UserInfoNew;
 
-  const decryptedUserDetails = {
+  const payload = {
     ...remainingFinancialTransactionsData,
     UserInfo: staticUserInfo,
   };
 
   try {
     const apiUrl = `${process.env.REACT_APP_API_CRM_BASE_URL}/GetFinancialTransactions`;
-    const response = await axios.post(apiUrl, decryptedUserDetails);
+    const response = await axios.post(apiUrl, payload);
     res.status(200).json(response.data);
   } catch (error) {
     res
@@ -178,23 +160,24 @@ router.post("/GetFinancialTransactions", async (req, res) => {
 
 router.post("/OrdoVRPCreateMandate", async (req, res) => {
   const MandateData = req.body.MandateData;
-  // const UserInfoNewcDcrypt = req.body.UserInfoNew;
+  const tokenRef = res.locals.tokenUserRef;
 
-  // Decrypt the data
+  let isValidCustomerCasesCode = await validateCustomerCases(
+    tokenRef,
+    MandateData.CaseReference
+  );
+  if (!isValidCustomerCasesCode) {
+    return res.status(401).json("Unauthorized request, please try again");
+  }
 
-  // const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
-  // const decryptedUserInfoData = JSON.parse(
-  //   userInfobytes.toString(CryptoJS.enc.Utf8)
-  // );
-
-  const decryptedUserDetails = {
+  const payload = {
     MandateData,
     UserInfo: staticUserInfo,
   };
 
   try {
     const apiUrl = `${process.env.REACT_APP_API_CRM_BASE_URL}/OrdoVRPCreateMandate`;
-    const response = await axios.post(apiUrl, decryptedUserDetails);
+    const response = await axios.post(apiUrl, payload);
     res.status(200).json(response.data);
   } catch (error) {
     res
@@ -203,30 +186,20 @@ router.post("/OrdoVRPCreateMandate", async (req, res) => {
   }
 });
 
+//pending security check
 router.post(
   "/accessPaysuiteIsStartDateValidatForContract",
   async (req, res) => {
     const StartDate = req.body.StartDate;
-    // const UserInfoNewcDcrypt = req.body.UserInfoNew;
 
-    // Decrypt the data
-
-    // const userInfobytes = CryptoJS.AES.decrypt(
-    //   UserInfoNewcDcrypt,
-    //   encryptionKey
-    // );
-    // const decryptedUserInfoData = JSON.parse(
-    //   userInfobytes.toString(CryptoJS.enc.Utf8)
-    // );
-
-    const decryptedUserDetails = {
+    const payload = {
       StartDate,
       UserInfo: staticUserInfo,
     };
 
     try {
       const apiUrl = `${process.env.REACT_APP_API_CRM_BASE_URL}/accessPaysuiteIsStartDateValidatForContract`;
-      const response = await axios.post(apiUrl, decryptedUserDetails);
+      const response = await axios.post(apiUrl, payload);
       res.status(200).json(response.data);
     } catch (error) {
       res
@@ -235,26 +208,26 @@ router.post(
     }
   }
 );
-
+//pending security check don't know applicant id
 router.post("/IsAccessPaysuiteCustomerCreated", async (req, res) => {
   const ApplicantID = req.body.ApplicantID;
-  // const UserInfoNewcDcrypt = req.body.UserInfoNew;
+  const tokenRef = res.locals.tokenUserRef;
 
-  // Decrypt the data
-
-  // const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
-  // const decryptedUserInfoData = JSON.parse(
-  //   userInfobytes.toString(CryptoJS.enc.Utf8)
-  // );
-
-  const decryptedUserDetails = {
+  let isValidCustomerCasesCode = await validateCustomerCases(
+    tokenRef,
+    ApplicantID
+  );
+  if (!isValidCustomerCasesCode) {
+    return res.status(401).json("Unauthorized request, please try again");
+  }
+  const payload = {
     ApplicantID,
     UserInfo: staticUserInfo,
   };
 
   try {
     const apiUrl = `${process.env.REACT_APP_API_CRM_BASE_URL}/IsAccessPaysuiteCustomerCreated`;
-    const response = await axios.post(apiUrl, decryptedUserDetails);
+    const response = await axios.post(apiUrl, payload);
     res.status(200).json(response.data);
   } catch (error) {
     res
@@ -263,19 +236,20 @@ router.post("/IsAccessPaysuiteCustomerCreated", async (req, res) => {
   }
 });
 
+//pending security check don't know applicant id
 router.post("/AccessPaysuiteCreateCustomer", async (req, res) => {
   const ApplicantID = req.body.ApplicantID;
-  // const UserInfoNewcDcrypt = req.body.UserInfoNew;
   const Customer = req.body.Customer;
+  const tokenRef = res.locals.tokenUserRef;
 
-  // Decrypt the data
-
-  // const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
-  // const decryptedUserInfoData = JSON.parse(
-  //   userInfobytes.toString(CryptoJS.enc.Utf8)
-  // );
-
-  const decryptedUserDetails = {
+  let isValidCustomerCasesCode = await validateCustomerCases(
+    tokenRef,
+    ApplicantID
+  );
+  if (!isValidCustomerCasesCode) {
+    return res.status(401).json("Unauthorized request, please try again");
+  }
+  const payload = {
     ApplicantID,
     Customer,
     UserInfo: staticUserInfo,
@@ -283,7 +257,7 @@ router.post("/AccessPaysuiteCreateCustomer", async (req, res) => {
 
   try {
     const apiUrl = `${process.env.REACT_APP_API_CRM_BASE_URL}/AccessPaysuiteCreateCustomer`;
-    const response = await axios.post(apiUrl, decryptedUserDetails);
+    const response = await axios.post(apiUrl, payload);
     res.status(200).json(response.data);
   } catch (error) {
     res
@@ -291,26 +265,27 @@ router.post("/AccessPaysuiteCreateCustomer", async (req, res) => {
       .json({ error: "An error occurred while fetching data from the API." });
   }
 });
+
+//pending security check don't know applicant id
 router.post("/IsAccessPaysuiteContractCreated", async (req, res) => {
   const ApplicantID = req.body.ApplicantID;
-  // const UserInfoNewcDcrypt = req.body.UserInfoNew;
+  const tokenRef = res.locals.tokenUserRef;
 
-  // Decrypt the data
-
-  // const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
-  // const decryptedUserInfoData = JSON.parse(
-  //   userInfobytes.toString(CryptoJS.enc.Utf8)
-  // );
-
-  const decryptedUserDetails = {
+  let isValidCustomerCasesCode = await validateCustomerCases(
+    tokenRef,
+    ApplicantID
+  );
+  if (!isValidCustomerCasesCode) {
+    return res.status(401).json("Unauthorized request, please try again");
+  }
+  const payload = {
     ApplicantID,
-
     UserInfo: staticUserInfo,
   };
 
   try {
     const apiUrl = `${process.env.REACT_APP_API_CRM_BASE_URL}/IsAccessPaysuiteContractCreated`;
-    const response = await axios.post(apiUrl, decryptedUserDetails);
+    const response = await axios.post(apiUrl, payload);
     res.status(200).json(response.data);
   } catch (error) {
     res
@@ -319,18 +294,20 @@ router.post("/IsAccessPaysuiteContractCreated", async (req, res) => {
   }
 });
 
+//pending security check don't know applicant id
 router.post("/AccessPaysuiteCreateContract", async (req, res) => {
   const ApplicantID = req.body.ApplicantID;
-  // const UserInfoNewcDcrypt = req.body.UserInfoNew;
   const ScheduleId = req.body.ScheduleId;
-  // Decrypt the data
+  const tokenRef = res.locals.tokenUserRef;
 
-  // const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
-  // const decryptedUserInfoData = JSON.parse(
-  //   userInfobytes.toString(CryptoJS.enc.Utf8)
-  // );
-
-  const decryptedUserDetails = {
+  let isValidCustomerCasesCode = await validateCustomerCases(
+    tokenRef,
+    ApplicantID
+  );
+  if (!isValidCustomerCasesCode) {
+    return res.status(401).json("Unauthorized request, please try again");
+  }
+  const payload = {
     ApplicantID,
     ScheduleId,
     UserInfo: staticUserInfo,
@@ -338,7 +315,7 @@ router.post("/AccessPaysuiteCreateContract", async (req, res) => {
 
   try {
     const apiUrl = `${process.env.REACT_APP_API_CRM_BASE_URL}/AccessPaysuiteCreateContract`;
-    const response = await axios.post(apiUrl, decryptedUserDetails);
+    const response = await axios.post(apiUrl, payload);
     res.status(200).json(response.data);
   } catch (error) {
     res
@@ -347,27 +324,26 @@ router.post("/AccessPaysuiteCreateContract", async (req, res) => {
   }
 });
 
+//pending security check don't know applicant id
 router.post("/AccessPaysuiteCancelContract", async (req, res) => {
   const ApplicantID = req.body.ApplicantID;
-  // const UserInfoNewcDcrypt = req.body.UserInfoNew;
+  const tokenRef = res.locals.tokenUserRef;
 
-  // Decrypt the data
-
-  // const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
-  // const decryptedUserInfoData = JSON.parse(
-  //   userInfobytes.toString(CryptoJS.enc.Utf8)
-  // );
-
-  const decryptedUserDetails = {
+  let isValidCustomerCasesCode = await validateCustomerCases(
+    tokenRef,
+    ApplicantID
+  );
+  if (!isValidCustomerCasesCode) {
+    return res.status(401).json("Unauthorized request, please try again");
+  }
+  const payload = {
     ApplicantID,
     UserInfo: staticUserInfo,
   };
 
-  console.log("decryptedUserDetails", decryptedUserDetails);
-
   try {
     const apiUrl = `${process.env.REACT_APP_API_CRM_BASE_URL}/AccessPaysuiteCancelContract`;
-    const response = await axios.post(apiUrl, decryptedUserDetails);
+    const response = await axios.post(apiUrl, payload);
     res.status(200).json(response.data);
   } catch (error) {
     res
@@ -378,25 +354,24 @@ router.post("/AccessPaysuiteCancelContract", async (req, res) => {
 
 router.post("/OrdoVRPCancelMandate", async (req, res) => {
   const CaseReference = req.body.CaseReference;
-  // const UserInfoNewcDcrypt = req.body.UserInfoNew;
+  const tokenRef = res.locals.tokenUserRef;
 
-  // Decrypt the data
+  let isValidCustomerCasesCode = await validateCustomerCases(
+    tokenRef,
+    CaseReference
+  );
+  if (!isValidCustomerCasesCode) {
+    return res.status(401).json("Unauthorized request, please try again");
+  }
 
-  // const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
-  // const decryptedUserInfoData = JSON.parse(
-  //   userInfobytes.toString(CryptoJS.enc.Utf8)
-  // );
-
-  const decryptedUserDetails = {
+  const payload = {
     CaseReference,
     UserInfo: staticUserInfo,
   };
 
-  console.log("decryptedUserDetails", decryptedUserDetails);
-
   try {
     const apiUrl = `${process.env.REACT_APP_API_CRM_BASE_URL}/OrdoVRPCancelMandate`;
-    const response = await axios.post(apiUrl, decryptedUserDetails);
+    const response = await axios.post(apiUrl, payload);
     res.status(200).json(response.data);
   } catch (error) {
     res
@@ -407,25 +382,23 @@ router.post("/OrdoVRPCancelMandate", async (req, res) => {
 
 router.post("/CaseRecalculatePaymentPlan", async (req, res) => {
   const pRequest = req.body.pRequest;
-  // const UserInfoNewcDcrypt = req.body.UserInfoNew;
+  const tokenRef = res.locals.tokenUserRef;
 
-  // Decrypt the data
-
-  // const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
-  // const decryptedUserInfoData = JSON.parse(
-  //   userInfobytes.toString(CryptoJS.enc.Utf8)
-  // );
-
-  const decryptedUserDetails = {
+  let isValidCustomerCasesCode = await validateCustomerCases(
+    tokenRef,
+    pRequest.CaseRef
+  );
+  if (!isValidCustomerCasesCode) {
+    return res.status(401).json("Unauthorized request, please try again");
+  }
+  const payload = {
     UserInfo: staticUserInfo,
     pRequest,
   };
 
-  console.log("decryptedUserDetails", decryptedUserDetails);
-
   try {
     const apiUrl = `${process.env.REACT_APP_API_CRM_BASE_URL}/CaseRecalculatePaymentPlan`;
-    const response = await axios.post(apiUrl, decryptedUserDetails);
+    const response = await axios.post(apiUrl, payload);
     res.status(200).json(response.data);
   } catch (error) {
     res
@@ -436,25 +409,24 @@ router.post("/CaseRecalculatePaymentPlan", async (req, res) => {
 
 router.post("/UpdatePaymentPlanHolidays", async (req, res) => {
   const pRequest = req.body.pRequest;
-  // const UserInfoNewcDcrypt = req.body.UserInfoNew;
+  const tokenRef = res.locals.tokenUserRef;
 
-  // Decrypt the data
+  let isValidCustomerCasesCode = await validateCustomerCases(
+    tokenRef,
+    pRequest.CaseReference
+  );
+  if (!isValidCustomerCasesCode) {
+    return res.status(401).json("Unauthorized request, please try again");
+  }
 
-  // const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
-  // const decryptedUserInfoData = JSON.parse(
-  //   userInfobytes.toString(CryptoJS.enc.Utf8)
-  // );
-
-  const decryptedUserDetails = {
+  const payload = {
     pRequest,
     UserInfo: staticUserInfo,
   };
 
-  console.log("decryptedUserDetails", decryptedUserDetails);
-
   try {
     const apiUrl = `${process.env.REACT_APP_API_CRM_BASE_URL}/UpdatePaymentPlanHolidays`;
-    const response = await axios.post(apiUrl, decryptedUserDetails);
+    const response = await axios.post(apiUrl, payload);
     res.status(200).json(response.data);
   } catch (error) {
     res
@@ -465,25 +437,20 @@ router.post("/UpdatePaymentPlanHolidays", async (req, res) => {
 
 router.post("/OpenBankingHandShakeInvoke", async (req, res) => {
   const pRequest = req.body.pRequest;
-  // const UserInfoNewcDcrypt = req.body.UserInfoNew;
+  const tokenRef = res.locals.tokenUserRef;
 
-  // Decrypt the data
+  if (tokenRef != pRequest.CustomerCode) {
+    return res.status(401).json("Unauthorized request, please try again");
+  }
 
-  // const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
-  // const decryptedUserInfoData = JSON.parse(
-  //   userInfobytes.toString(CryptoJS.enc.Utf8)
-  // );
-
-  const decryptedUserDetails = {
+  const payload = {
     pRequest,
     UserInfo: staticUserInfo,
   };
 
-  console.log("decryptedUserDetails", decryptedUserDetails);
-
   try {
     const apiUrl = `${process.env.REACT_APP_API_CRM_BASE_URL}/OpenBankingHandShakeInvoke`;
-    const response = await axios.post(apiUrl, decryptedUserDetails);
+    const response = await axios.post(apiUrl, payload);
     res.status(200).json(response.data);
   } catch (error) {
     res
@@ -492,25 +459,18 @@ router.post("/OpenBankingHandShakeInvoke", async (req, res) => {
   }
 });
 
+//No security check added
 router.post("/getPostcodeLookup", async (req, res) => {
   const pRequest = req.body.pRequest;
-  // const UserInfoNewcDcrypt = req.body.UserInfoNew;
 
-  // Decrypt the data
-
-  // const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
-  // const decryptedUserInfoData = JSON.parse(
-  //   userInfobytes.toString(CryptoJS.enc.Utf8)
-  // );
-
-  const decryptedUserDetails = {
+  const payload = {
     pRequest,
     UserInfo: staticUserInfo,
   };
 
   try {
     const apiUrl = `${process.env.REACT_APP_API_CRM_BASE_URL}/getPostcodeLookup`;
-    const response = await axios.post(apiUrl, decryptedUserDetails);
+    const response = await axios.post(apiUrl, payload);
     res.status(200).json(response.data);
   } catch (error) {
     res
@@ -521,16 +481,18 @@ router.post("/getPostcodeLookup", async (req, res) => {
 
 router.post("/GetInvoiceTerms", async (req, res) => {
   const IncludeRefund = req.body.IncludeRefunds;
-  // const UserInfoNewcDcrypt = req.body.UserInfoNew;
   const Reference = req.body.Reference;
-  // Decrypt the data
+  const tokenRef = res.locals.tokenUserRef;
 
-  // const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
-  // const decryptedUserInfoData = JSON.parse(
-  //   userInfobytes.toString(CryptoJS.enc.Utf8)
-  // );
+  let isValidCustomerCasesCode = await validateCustomerCases(
+    tokenRef,
+    Reference
+  );
+  if (!isValidCustomerCasesCode) {
+    return res.status(401).json("Unauthorized request, please try again");
+  }
 
-  const decryptedUserDetails = {
+  const payload = {
     UserInfo: staticUserInfo,
     IncludeRefunds: IncludeRefund,
     Reference,
@@ -538,7 +500,7 @@ router.post("/GetInvoiceTerms", async (req, res) => {
 
   try {
     const apiUrl = `${process.env.REACT_APP_API_CRM_BASE_URL}/GetInvoiceTerms`;
-    const response = await axios.post(apiUrl, decryptedUserDetails);
+    const response = await axios.post(apiUrl, payload);
     res.status(200).json(response.data);
   } catch (error) {
     res
@@ -546,25 +508,27 @@ router.post("/GetInvoiceTerms", async (req, res) => {
       .json({ error: "An error occurred while fetching data from the API." });
   }
 });
+
 router.post("/OrdoCollectPayment", async (req, res) => {
   const PaymentInfo = req.body.PaymentInfo;
-  // const UserInfoNewcDcrypt = req.body.UserInfoNew;
+  const tokenRef = res.locals.tokenUserRef;
 
-  // Decrypt the data
+  let isValidCustomerCasesCode = await validateCustomerCases(
+    tokenRef,
+    PaymentInfo.CaseReference
+  );
+  if (!isValidCustomerCasesCode) {
+    return res.status(401).json("Unauthorized request, please try again");
+  }
 
-  // const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
-  // const decryptedUserInfoData = JSON.parse(
-  //   userInfobytes.toString(CryptoJS.enc.Utf8)
-  // );
-
-  const decryptedUserDetails = {
+  const payload = {
     UserInfo: staticUserInfo,
     PaymentInfo,
   };
 
   try {
     const apiUrl = `${process.env.REACT_APP_API_CRM_BASE_URL}/OrdoCollectPayment`;
-    const response = await axios.post(apiUrl, decryptedUserDetails);
+    const response = await axios.post(apiUrl, payload);
     res.status(200).json(response.data);
   } catch (error) {
     res
@@ -575,23 +539,20 @@ router.post("/OrdoCollectPayment", async (req, res) => {
 
 router.post("/UpdateCustomer", async (req, res) => {
   const Customer = req.body.Customer;
-  // const UserInfoNewcDcrypt = req.body.UserInfoNew;
+  const tokenRef = res.locals.tokenUserRef;
 
-  // Decrypt the data
+  // if (tokenRef != Customer.CustomerReference) {
+  //   return res.status(401).json("Unauthorized request, please try again");
+  // }
 
-  // const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
-  // const decryptedUserInfoData = JSON.parse(
-  //   userInfobytes.toString(CryptoJS.enc.Utf8)
-  // );
-
-  const decryptedUserDetails = {
+  const payload = {
     UserInfo: staticUserInfo,
     Customer,
   };
 
   try {
     const apiUrl = `${process.env.REACT_APP_API_CRM_BASE_URL}/UpdateCustomer`;
-    const response = await axios.post(apiUrl, decryptedUserDetails);
+    const response = await axios.post(apiUrl, payload);
     res.status(200).json(response.data);
   } catch (error) {
     res
@@ -602,23 +563,24 @@ router.post("/UpdateCustomer", async (req, res) => {
 
 router.post("/UpdateCaseLockPaymentPlan", async (req, res) => {
   const ApplicantID = req.body.CaseReference;
-  // const UserInfoNewcDcrypt = req.body.UserInfoNew;
+  const tokenRef = res.locals.tokenUserRef;
 
-  // Decrypt the data
+  let isValidCustomerCasesCode = await validateCustomerCases(
+    tokenRef,
+    ApplicantID
+  );
+  if (!isValidCustomerCasesCode) {
+    return res.status(401).json("Unauthorized request, please try again");
+  }
 
-  // const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
-  // const decryptedUserInfoData = JSON.parse(
-  //   userInfobytes.toString(CryptoJS.enc.Utf8)
-  // );
-
-  const decryptedUserDetails = {
+  const payload = {
     UserInfo: staticUserInfo,
     CaseReference: ApplicantID,
   };
 
   try {
     const apiUrl = `${process.env.REACT_APP_API_CRM_BASE_URL}/UpdateCaseLockPaymentPlan`;
-    const response = await axios.post(apiUrl, decryptedUserDetails);
+    const response = await axios.post(apiUrl, payload);
     res.status(200).json(response.data);
   } catch (error) {
     res
@@ -627,25 +589,18 @@ router.post("/UpdateCaseLockPaymentPlan", async (req, res) => {
   }
 });
 
+//pending security check don't know applicant id
 router.post("/CreateDocumentToPdf", async (req, res) => {
   const pRequest = req.body.pRequest;
-  // const UserInfoNewcDcrypt = req.body.UserInfoNew;
 
-  // Decrypt the data
-
-  // const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
-  // const decryptedUserInfoData = JSON.parse(
-  //   userInfobytes.toString(CryptoJS.enc.Utf8)
-  // );
-
-  const decryptedUserDetails = {
+  const payload = {
     UserInfo: staticUserInfo,
     pRequest,
   };
 
   try {
     const apiUrl = `${process.env.REACT_APP_API_CRM_BASE_URL}/CreateDocumentToPdf`;
-    const response = await axios.post(apiUrl, decryptedUserDetails);
+    const response = await axios.post(apiUrl, payload);
     res.status(200).json(response.data);
   } catch (error) {
     res
@@ -654,25 +609,18 @@ router.post("/CreateDocumentToPdf", async (req, res) => {
   }
 });
 
+//pending security check
 router.post("/FetchifyMobileVerification", async (req, res) => {
   const pRequest = req.body.pRequest;
-  // const UserInfoNewcDcrypt = req.body.UserInfoNew;
 
-  // Decrypt the data
-
-  // const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
-  // const decryptedUserInfoData = JSON.parse(
-  //   userInfobytes.toString(CryptoJS.enc.Utf8)
-  // );
-
-  const decryptedUserDetails = {
+  const payload = {
     UserInfo: staticUserInfo,
     pRequest,
   };
 
   try {
     const apiUrl = `${process.env.REACT_APP_API_CRM_BASE_URL}/FetchifyMobileVerification`;
-    const response = await axios.post(apiUrl, decryptedUserDetails);
+    const response = await axios.post(apiUrl, payload);
     res.status(200).json(response.data);
   } catch (error) {
     res
@@ -681,25 +629,18 @@ router.post("/FetchifyMobileVerification", async (req, res) => {
   }
 });
 
+//pending security check
 router.post("/FetchifyEmailVerification", async (req, res) => {
   const pRequest = req.body.pRequest;
-  // const UserInfoNewcDcrypt = req.body.UserInfoNew;
 
-  // Decrypt the data
-
-  // const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
-  // const decryptedUserInfoData = JSON.parse(
-  //   userInfobytes.toString(CryptoJS.enc.Utf8)
-  // );
-
-  const decryptedUserDetails = {
+  const payload = {
     UserInfo: staticUserInfo,
     pRequest,
   };
 
   try {
     const apiUrl = `${process.env.REACT_APP_API_CRM_BASE_URL}/FetchifyEmailVerification`;
-    const response = await axios.post(apiUrl, decryptedUserDetails);
+    const response = await axios.post(apiUrl, payload);
     res.status(200).json(response.data);
   } catch (error) {
     res
@@ -710,23 +651,23 @@ router.post("/FetchifyEmailVerification", async (req, res) => {
 
 router.post("/InvokeADPCall", async (req, res) => {
   const pRequest = req.body.pRequest;
-  // const UserInfoNewcDcrypt = req.body.UserInfoNew;
+  const tokenRef = res.locals.tokenUserRef;
 
-  // Decrypt the data
-
-  // const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
-  // const decryptedUserInfoData = JSON.parse(
-  //   userInfobytes.toString(CryptoJS.enc.Utf8)
-  // );
-
-  const decryptedUserDetails = {
+  let isValidCustomerCasesCode = await validateCustomerCases(
+    tokenRef,
+    pRequest.CaseRef
+  );
+  if (!isValidCustomerCasesCode) {
+    return res.status(401).json("Unauthorized request, please try again");
+  }
+  const payload = {
     UserInfo: staticUserInfo,
     pRequest,
   };
 
   try {
     const apiUrl = `${process.env.REACT_APP_API_CRM_BASE_URL}/InvokeADPCall`;
-    const response = await axios.post(apiUrl, decryptedUserDetails);
+    const response = await axios.post(apiUrl, payload);
     res.status(200).json(response.data);
   } catch (error) {
     res
@@ -735,19 +676,12 @@ router.post("/InvokeADPCall", async (req, res) => {
   }
 });
 
+//pending security check
 router.post("/CreateCaseJSON", async (req, res) => {
   const CaseType = req.body.CaseType;
   const CaseParams = req.body.CaseParams;
-  // const UserInfoNewcDcrypt = req.body.UserInfoNew;
 
-  // Decrypt the data
-
-  // const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
-  // const decryptedUserInfoData = JSON.parse(
-  //   userInfobytes.toString(CryptoJS.enc.Utf8)
-  // );
-
-  const decryptedUserDetails = {
+  const payload = {
     UserInfo: staticUserInfo,
     CaseType,
     CaseParams,
@@ -755,7 +689,7 @@ router.post("/CreateCaseJSON", async (req, res) => {
 
   try {
     const apiUrl = `${process.env.REACT_APP_API_CRM_BASE_URL}/CreateCaseJSON`;
-    const response = await axios.post(apiUrl, decryptedUserDetails);
+    const response = await axios.post(apiUrl, payload);
     res.status(200).json(response.data);
   } catch (error) {
     res
@@ -766,23 +700,19 @@ router.post("/CreateCaseJSON", async (req, res) => {
 
 router.post("/UpdateCase", async (req, res) => {
   const CaseApp = req.body.CaseApp;
-  // const UserInfoNewcDcrypt = req.body.UserInfoNew;
+  const tokenRef = res.locals.tokenUserRef;
 
-  // Decrypt the data
-
-  // const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
-  // const decryptedUserInfoData = JSON.parse(
-  //   userInfobytes.toString(CryptoJS.enc.Utf8)
-  // );
-
-  const decryptedUserDetails = {
+  if (tokenRef != CaseApp.CustomerReference) {
+    return res.status(401).json("Unauthorized request, please try again");
+  }
+  const payload = {
     CaseApp,
     UserInfo: staticUserInfo,
   };
 
   try {
     const apiUrl = `${process.env.REACT_APP_API_CRM_BASE_URL}/UpdateCase`;
-    const response = await axios.post(apiUrl, decryptedUserDetails);
+    const response = await axios.post(apiUrl, payload);
     res.status(200).json(response.data);
   } catch (error) {
     res
@@ -793,23 +723,18 @@ router.post("/UpdateCase", async (req, res) => {
 
 router.post("/updateCaseCancellable", async (req, res) => {
   const CaseApp = req.body.CaseApp;
-  // const UserInfoNewcDcrypt = req.body.UserInfoNew;
-
-  // Decrypt the data
-
-  // const userInfobytes = CryptoJS.AES.decrypt(UserInfoNewcDcrypt, encryptionKey);
-  // const decryptedUserInfoData = JSON.parse(
-  //   userInfobytes.toString(CryptoJS.enc.Utf8)
-  // );
-
-  const decryptedUserDetails = {
+  const tokenRef = res.locals.tokenUserRef;
+  if (tokenRef != CaseApp.CustomerReference) {
+    return res.status(401).json("Unauthorized request, please try again");
+  }
+  const payload = {
     CaseApp,
     UserInfo: staticUserInfo,
   };
 
   try {
     const apiUrl = `${process.env.REACT_APP_API_CRM_BASE_URL}/UpdateCase`;
-    const response = await axios.post(apiUrl, decryptedUserDetails);
+    const response = await axios.post(apiUrl, payload);
     res.status(200).json(response.data);
   } catch (error) {
     res

@@ -8,10 +8,11 @@ const schema = new Schema({
   password: { type: String, minlength: 8 },
   customerReference: { type: String, sparse: true },
   created_at: { type: Date, default: new Date() },
+  customerCases: [{ type: String }],
 });
 
 // Old database "User" with customerReference null issue
 // const User = mongoose.model("User", schema);
-const User = mongoose.model("UserData", schema);
+const User = mongoose.model("User", schema);
 
 module.exports = User;
